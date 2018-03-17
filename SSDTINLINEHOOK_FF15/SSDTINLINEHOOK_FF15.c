@@ -10,7 +10,7 @@ UCHAR*   __OriginalNtOpenProcessCode = NULL;
 UCHAR*   __TrampolineCode = NULL;
 ULONG    __PatchedCodeLength = 6;
 PVOID pProxyFunction = 0;
-UCHAR JumpCode[6] = { 0xff,0x15,0x00,0x00,0x00,0x00 };     //FF 15 XX XX XX XX
+UCHAR JumpCode[8] = { 0x60,0xff,0x15,0x00,0x00,0x00,0x00,0xC3 };     //FF 15 XX XX XX XX
 UCHAR JumpBackCode[6] = { 0x68,0x00,0x00,0x00,0x00,0xC3 }; //push xxxxxxxx ret
 PVOID v1 = NULL;
 PVOID v2 = NULL;
@@ -64,30 +64,14 @@ NTSTATUS SSDTInlineHook(PVOID OriginalAddress, PVOID FakeAddress, ULONG PatchedC
 {
 	 
 
-	*(ULONG *)((ULONG)JumpCode + 2) = &v1;
+	*(ULONG *)((ULONG)JumpCode + 3) = &v1;
 	
 	 
-	PUCHAR pOpCode;
-	ULONG BackupLength = 0;
-
-
-	while (BackupLength < 6)
-	{
-		BackupLength += GetFunctionCodeSize((PVOID)((ULONG)OriginalAddress + BackupLength), &pOpCode);
-	}
-	 
-	pProxyFunction = ExAllocatePool(NonPagedPool, (BackupLength + 6));
-
-	if (!pProxyFunction)return NULL;
-
-	*(ULONG *)((ULONG)JumpBackCode + 1) = (ULONG)OriginalAddress + BackupLength;
-
-	RtlCopyMemory(pProxyFunction, OriginalAddress, BackupLength);
-	RtlCopyMemory((PVOID)((ULONG)pProxyFunction + BackupLength), JumpBackCode, 6);
+	
 
 
 	OnEnableWrite();
-	memcpy((PVOID)OriginalAddress, JumpCode, PatchedCodeLength);
+	memcpy((PVOID)OriginalAddress, JumpCode, 8);
 	OnDisableWrite();
 	return STATUS_SUCCESS;
 }
