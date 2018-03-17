@@ -11,7 +11,7 @@ UCHAR*   __TrampolineCode = NULL;
 ULONG    __PatchedCodeLength = 6;
 PVOID pProxyFunction = 0;
 UCHAR JumpCode[6] = { 0xff,0x15,0x00,0x00,0x00,0x00 };     //FF 15 XX XX XX XX
-UCHAR JumpBackCode[6] = { 0xff,0x15,0x00,0x00,0x00,0x00 }; //FF 15 XX XX XX XX
+UCHAR JumpBackCode[6] = { 0x68,0x00,0x00,0x00,0x00,0xC3 }; //push xxxxxxxx ret
 PVOID v1 = NULL;
 PVOID v2 = NULL;
 NTSTATUS SSDTInlineHook(PVOID OriginalAddress, PVOID FakeAddress, ULONG PatchedCodeLength);
@@ -62,54 +62,29 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegisterPath)
 
 NTSTATUS SSDTInlineHook(PVOID OriginalAddress, PVOID FakeAddress, ULONG PatchedCodeLength)
 {
-	PUCHAR v3 = NULL;
-	UCHAR v2[] = "\xe9\x00\x00\x00\x00";
- 
-
-	//该成员用于恢复
-	__OriginalNtOpenProcessCode = (UCHAR*)ExAllocatePool(NonPagedPool, PatchedCodeLength);//6
-
-	if (__OriginalNtOpenProcessCode == NULL)
-	{
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-	OnEnableWrite();
-	memcpy(__OriginalNtOpenProcessCode, (PVOID)OriginalAddress, PatchedCodeLength);
-	OnDisableWrite();
-
-
-
-	__TrampolineCode = (UCHAR*)ExAllocatePool(NonPagedPool, (PatchedCodeLength + 5));
-	if (__TrampolineCode == NULL)
-	{
-
-		if (__OriginalNtOpenProcessCode != NULL)
-		{
-			ExFreePool(__OriginalNtOpenProcessCode);
-			__OriginalNtOpenProcessCode = NULL;
-		}
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-
-
-
-	RtlFillMemory(__TrampolineCode, PatchedCodeLength + 5, 0x90);  //NOP
-																   //__TrampolineCode[0x90 0x90 0x90 0x90 0x90 0x90 0x90 0x90 0x90 0x90]
-
-
-	memcpy((PUCHAR)__TrampolineCode, __OriginalNtOpenProcessCode, PatchedCodeLength);
-
+	 
 
 	*(ULONG *)((ULONG)JumpCode + 2) = &v1;
 	
-	v3 = (PUCHAR)OriginalAddress + PatchedCodeLength;
+	 
+	PUCHAR pOpCode;
+	ULONG BackupLength = 0;
 
 
-	*((ULONG*)&v2[1]) = (PUCHAR)v3 - ((PUCHAR)__TrampolineCode + 6 + 5);
+	while (BackupLength < 6)
+	{
+		BackupLength += GetFunctionCodeSize((PVOID)((ULONG)OriginalAddress + BackupLength), &pOpCode);
+	}
+	 
+	pProxyFunction = ExAllocatePool(NonPagedPool, (BackupLength + 6));
 
+	if (!pProxyFunction)return NULL;
 
+	*(ULONG *)((ULONG)JumpBackCode + 1) = (ULONG)OriginalAddress + BackupLength;
 
-	memcpy((PUCHAR)__TrampolineCode + PatchedCodeLength, v2, 5);
+	RtlCopyMemory(pProxyFunction, OriginalAddress, BackupLength);
+	RtlCopyMemory((PVOID)((ULONG)pProxyFunction + BackupLength), JumpBackCode, 6);
+
 
 	OnEnableWrite();
 	memcpy((PVOID)OriginalAddress, JumpCode, PatchedCodeLength);

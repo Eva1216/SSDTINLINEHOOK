@@ -75,7 +75,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegisterPath)
 PVOID HookSSDTFunctionByPush(PVOID pSourceFunction, PVOID FakeAddress)
 {
 
-	DbgPrint("Hook Success");
+	 
 
 	UCHAR JumpCode[6] = { 0x68,0x00,0x00,0x00,0x00,0xC3 };     //push xxxxxxxx ret
 	UCHAR JumpBackCode[6] = { 0x68,0x00,0x00,0x00,0x00,0xC3 }; //push xxxxxxxx ret
