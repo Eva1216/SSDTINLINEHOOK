@@ -19,18 +19,33 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Inf Include="SSDTINLINEHOOK.inf">
+    <Inf Include="SSDTINLINEHOOK_PUSH.inf">
       <Filter>Driver Files</Filter>
     </Inf>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SSDTHOOK.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="SSDTHOOK.c">
+    <ClCompile Include="SSDTINLINEHOOK_PUSH.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="libdasm.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Common.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="SSDTINLINEHOOK_PUSH.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="libdasm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tables.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
